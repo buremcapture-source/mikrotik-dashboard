@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HN-Net Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #111722;
+    --surface2: #1a2234;
+    --border: #1e2d44;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --green: #00ff88;
+    --red: #ff3a5c;
+    --yellow: #ffd94a;
+    --text: #e8f0ff;
+    --muted: #5a7090;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: var(--bg);
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    width: 420px;
+    padding: 40px;
+    position: relative;
+    animation: slideUp 0.4s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .login-box::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 40px; right: 40px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    filter: blur(4px);
+  }
+
+  .login-logo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+  .login-logo span { color: var(--accent); }
+
+  .login-sub {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 36px;
+  }
+
+  .field-group { margin-bottom: 16px; }
+  .field-group label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field-group input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field-group input:focus { border-color: var(--accent); }
+
+  .btn-connect {
+    width: 100%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-connect:hover { background: #33ddff; transform: translateY(-1px); }
+  .btn-connect:active { transform: translateY(0); }
+  .btn-connect:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .login-error {
+    background: rgba(255,58,92,0.1);
+    border: 1px solid rgba(255,58,92,0.3);
+    color: var(--red);
+    font-size: 12px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .info-box {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 12px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  /* ── MAIN DASHBOARD ── */
+  #dashboard { display: none; position: relative; z-index: 1; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,14,20,0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .header-logo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .header-logo span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .connection-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .btn-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── STATS BAR ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 1px;
+  }
+  .stat-card.total::after { background: var(--accent); }
+  .stat-card.active::after { background: var(--green); }
+  .stat-card.isolated::after { background: var(--red); }
+  .stat-card.offline::after { background: var(--muted); }
+
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-card.total .stat-value { color: var(--accent); }
+  .stat-card.active .stat-value { color: var(--green); }
+  .stat-card.isolated .stat-value { color: var(--red); }
+  .stat-card.offline .stat-value { color: var(--muted); }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .search-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 8px 14px;
+    outline: none;
+    width: 200px;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--muted); }
+
+  .btn-refresh {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 8px 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-refresh.spinning svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CLIENT TABLE ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead tr {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    padding: 14px 20px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(30,45,68,0.5);
+    transition: background 0.15s;
+    animation: fadeIn 0.3s ease both;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 16px 20px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .client-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .ip-badge {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .status-badge.online {
+    background: rgba(0,255,136,0.1);
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.2);
+  }
+  .status-badge.offline {
+    background: rgba(90,112,144,0.1);
+    color: var(--muted);
+    border: 1px solid rgba(90,112,144,0.2);
+  }
+  .status-badge.isolated {
+    background: rgba(255,58,92,0.1);
+    color: var(--red);
+    border: 1px solid rgba(255,58,92,0.2);
+  }
+  .status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .speed-tag {
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.15);
+    padding: 3px 8px;
+  }
+
+  /* Action buttons */
+  .actions { display: flex; gap: 8px; align-items: center; }
+
+  .btn-action {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 7px 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-isolir {
+    background: rgba(255,58,92,0.15);
+    color: var(--red);
+    border: 1px solid rgba(255,58,92,0.3);
+  }
+  .btn-isolir:hover:not(:disabled) {
+    background: var(--red);
+    color: white;
+  }
+
+  .btn-aktifkan {
+    background: rgba(0,255,136,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.25);
+  }
+  .btn-aktifkan:hover:not(:disabled) {
+    background: var(--green);
+    color: var(--bg);
+  }
+
+  .btn-detail {
+    background: rgba(0,212,255,0.08);
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.15);
+  }
+  .btn-detail:hover:not(:disabled) {
+    background: rgba(0,212,255,0.2);
+  }
+
+  /* Loading state */
+  .loading-row td {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+
+  /* ── TOAST NOTIFICATION ── */
+  #toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 20px;
+    font-size: 13px;
+    z-index: 200;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-left-color: var(--green); }
+  #toast.error { border-left-color: var(--red); }
+  #toast.warning { border-left-color: var(--yellow); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 150;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    width: 480px;
+    padding: 32px;
+    animation: slideUp 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .detail-item label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .detail-item span {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+  .btn-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 9px 20px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-close:hover { border-color: var(--muted); color: var(--text); }
+
+  /* ── CONFIRM MODAL ── */
+  .confirm-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  .confirm-text strong { color: var(--text); }
+  .confirm-text .warn { color: var(--yellow); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    th:nth-child(3), td:nth-child(3) { display: none; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">HN<span>-Net</span></div>
+    <div class="login-sub">Mikrotik PPPoE Manager</div>
+
+    <div class="info-box">
+      ℹ️ Dashboard ini memerlukan proxy server di port 3000.<br>
+      Jalankan: <code style="background:rgba(0,0,0,0.3);padding:2px 6px;">node proxy-server.js</code>
+    </div>
+
+    <div class="field-group">
+      <label>Router IP / URL</label>
+      <input type="text" id="router-ip" value="http://192.168.1.2" placeholder="http://192.168.1.2">
+    </div>
+    <div class="field-group">
+      <label>Username</label>
+      <input type="text" id="api-user" placeholder="dashboard">
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <input type="password" id="api-pass" placeholder="••••••••">
+    </div>
+    <div class="field-group">
+      <label>Proxy Server</label>
+      <input type="text" id="proxy-url" value="http://localhost:3000" placeholder="http://localhost:3000">
+      <small style="color:var(--muted);margin-top:4px;display:block;font-size:10px;">
+        💡 Desktop: localhost:3000 | Mobile: ganti localhost dengan IP komputer (contoh: 192.168.1.100:3000)
+      </small>
+    </div>
+
+    <button class="btn-connect" id="btn-connect" onclick="doLogin()">Connect</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <div class="header-logo">HN<span>-Net</span> <span style="font-weight:400;font-size:13px;color:var(--muted);margin-left:8px;">PPPoE Manager</span></div>
+    <div class="header-right">
+      <div class="connection-badge">
+        <div class="dot"></div>
+        <span id="connected-host">192.168.1.2</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card total" style="animation-delay:0.05s">
+        <div class="stat-label">Total Client</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card active" style="animation-delay:0.1s">
+        <div class="stat-label">Online</div>
+        <div class="stat-value" id="stat-online">—</div>
+      </div>
+      <div class="stat-card isolated" style="animation-delay:0.15s">
+        <div class="stat-label">Diisolir</div>
+        <div class="stat-value" id="stat-isolated">—</div>
+      </div>
+      <div class="stat-card offline" style="animation-delay:0.2s">
+        <div class="stat-label">Offline</div>
+        <div class="stat-value" id="stat-offline">—</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="section-title">Daftar Pelanggan</div>
+        <input type="text" class="search-box" id="search-box" placeholder="Cari nama client..." oninput="filterClients()">
+      </div>
+      <button class="btn-refresh" id="btn-refresh" onclick="loadClients()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nama Client</th>
+            <th>IP Address</th>
+            <th>Paket</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="client-tbody">
+          <tr class="loading-row">
+            <td colspan="6"><span class="spinner"></span> Memuat data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <div class="modal-title" id="modal-client-name">Detail Client</div>
+    <div class="detail-grid" id="modal-detail-grid"></div>
+    <div class="modal-actions">
+      <button class="btn-close" onclick="closeModal('modal-detail')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-title" id="confirm-title">Konfirmasi</div>
+    <p class="confirm-text" id="confirm-text"></p>
+    <div class="modal-actions">
+      <button class="btn-close" onclick="closeModal('modal-confirm')">Batal</button>
+      <button class="btn-action" id="confirm-btn" onclick="executeAction()">Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ──── STATE ────
+let ROUTER_IP = '';
+let API_CREDS = '';
+let PROXY_URL = '';
+let allClients = [];
+let activeConnections = [];
+let pendingAction = null;
+
+const ISOLIR_PROFILE = 'Profil Isolir';
+const ISOLIR_PROFILE_MANUAL = 'Profil Isolir Manual';
+
+// ──── AUTH ────
+async function doLogin() {
+  const ip = document.getElementById('router-ip').value.trim().replace(/\/$/, '');
+  const user = document.getElementById('api-user').value.trim();
+  const pass = document.getElementById('api-pass').value;
+  const proxy = document.getElementById('proxy-url').value.trim();
+
+  if (!ip || !user || !proxy) return showLoginError('Isi semua field!');
+
+  const btn = document.getElementById('btn-connect');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+
+  ROUTER_IP = ip;
+  API_CREDS = btoa(`${user}:${pass}`);
+  PROXY_URL = proxy;
+
+  try {
+    const res = await apiGet('/rest/system/identity');
+    if (res.ok) {
+      document.getElementById('connected-host').textContent = ip.replace(/^https?:\/\//, '');
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadClients();
+    } else {
+      showLoginError('Login gagal. Periksa username/password.');
+    }
+  } catch (e) {
+    showLoginError('Tidak bisa terhubung. Periksa proxy server sudah berjalan: node proxy-server.js');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Connect';
+}
+
+function doLogout() {
+  ROUTER_IP = '';
+  API_CREDS = '';
+  PROXY_URL = '';
+  allClients = [];
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ──── API HELPERS ────
+function apiGet(path) {
+  const params = new URLSearchParams({
+    target: ROUTER_IP,
+    path: path,
+    auth: API_CREDS
+  });
+  return fetch(`${PROXY_URL}/proxy?${params}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+function apiPatch(path, body) {
+  const params = new URLSearchParams({
+    target: ROUTER_IP,
+    path: path,
+    auth: API_CREDS
+  });
+  return fetch(`${PROXY_URL}/proxy?${params}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+// ──── LOAD DATA ────
+async function loadClients() {
+  const tbody = document.getElementById('client-tbody');
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> Memuat data...</td></tr>';
+
+  try {
+    const [secretsRes, activeRes] = await Promise.all([
+      apiGet('/rest/ppp/secret?service=pppoe'),
+      apiGet('/rest/ppp/active')
+    ]);
+
+    const secrets = await secretsRes.json();
+    const active = await activeRes.json();
+
+    activeConnections = Array.isArray(active) ? active : [];
+    allClients = Array.isArray(secrets) ? secrets : [];
+
+    renderTable(allClients);
+    updateStats();
+  } catch (e) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:var(--red)">⚠ Gagal memuat data. Cek koneksi proxy server.</td></tr>';
+  }
+
+  btn.classList.remove('spinning');
+}
+
+// ──── RENDER ────
+function getClientStatus(client) {
+  const isIsolated = client.profile === ISOLIR_PROFILE || client.profile === ISOLIR_PROFILE_MANUAL;
+  if (isIsolated) return 'isolated';
+  const isOnline = activeConnections.some(a => a.name === client.name);
+  return isOnline ? 'online' : 'offline';
+}
+
+function getActiveInfo(clientName) {
+  return activeConnections.find(a => a.name === clientName);
+}
+
+function renderTable(clients) {
+  const tbody = document.getElementById('client-tbody');
+  const search = document.getElementById('search-box').value.toLowerCase();
+
+  const filtered = clients.filter(c =>
+    !search || c.name.toLowerCase().includes(search)
+  );
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Tidak ada client ditemukan.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((client, i) => {
+    const status = getClientStatus(client);
+    const activeInfo = getActiveInfo(client.name);
+    const ip = activeInfo ? activeInfo['address'] : (client['remote-address'] || '—');
+    const profile = client.profile || '—';
+
+    const statusBadge = {
+      online:   `<span class="status-badge online"><span class="status-dot"></span>Online</span>`,
+      offline:  `<span class="status-badge offline"><span class="status-dot"></span>Offline</span>`,
+      isolated: `<span class="status-badge isolated"><span class="status-dot"></span>Diisolir</span>`
+    }[status];
+
+    const isolirBtn = status !== 'isolated'
+      ? `<button class="btn-action btn-isolir" onclick="confirmAction('isolir','${client['.id']}','${client.name}')">Isolir</button>`
+      : `<button class="btn-action btn-aktifkan" onclick="confirmAction('aktifkan','${client['.id']}','${client.name}','${client.profile}')">Aktifkan</button>`;
+
+    return `
+      <tr style="animation-delay:${i * 0.03}s">
+        <td style="color:var(--muted);font-size:12px">${i + 1}</td>
+        <td><div class="client-name">${client.name}</div></td>
+        <td><span class="ip-badge">${ip}</span></td>
+        <td><span class="speed-tag">${profile}</span></td>
+        <td>${statusBadge}</td>
+        <td>
+          <div class="actions">
+            ${isolirBtn}
+            <button class="btn-action btn-detail" onclick="showDetail('${client['.id']}')">Detail</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function filterClients() {
+  renderTable(allClients);
+}
+
+function updateStats() {
+  const total = allClients.length;
+  const isolated = allClients.filter(c =>
+    c.profile === ISOLIR_PROFILE || c.profile === ISOLIR_PROFILE_MANUAL
+  ).length;
+  const online = allClients.filter(c => {
+    const status = getClientStatus(c);
+    return status === 'online';
+  }).length;
+  const offline = total - online - isolated;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-online').textContent = online;
+  document.getElementById('stat-isolated').textContent = isolated;
+  document.getElementById('stat-offline').textContent = Math.max(0, offline);
+}
+
+// ──── ACTIONS ────
+let originalProfile = '';
+
+function confirmAction(type, id, name, currentProfile = '') {
+  pendingAction = { type, id, name, currentProfile };
+  originalProfile = currentProfile;
+
+  const title = document.getElementById('confirm-title');
+  const text = document.getElementById('confirm-text');
+  const btn = document.getElementById('confirm-btn');
+
+  if (type === 'isolir') {
+    title.textContent = 'Isolir Client';
+    text.innerHTML = `Anda akan mengisolir <strong>${name}</strong>.<br><br><span class="warn">⚠ Client akan tetap terhubung tapi akses internet akan diblokir (kecuali DNS & WhatsApp).</span>`;
+    btn.className = 'btn-action btn-isolir';
+    btn.textContent = 'Isolir Sekarang';
+  } else {
+    title.textContent = 'Aktifkan Client';
+    text.innerHTML = `Anda akan mengaktifkan kembali <strong>${name}</strong>.<br><br>Akses internet akan dipulihkan ke paket semula.`;
+    btn.className = 'btn-action btn-aktifkan';
+    btn.textContent = 'Aktifkan Sekarang';
+  }
+
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+async function executeAction() {
+  if (!pendingAction) return;
+  const { type, id, name } = pendingAction;
+
+  closeModal('modal-confirm');
+
+  const client = allClients.find(c => c['.id'] === id);
+  if (!client) return;
+
+  if (type === 'isolir') {
+    await applyProfile(id, name, ISOLIR_PROFILE);
+  } else {
+    const restoredProfile = guessOriginalProfile(client);
+    await applyProfile(id, name, restoredProfile);
+  }
+}
+
+function guessOriginalProfile(client) {
+  const addr = client['remote-address'] || '';
+  if (addr.startsWith('142.')) return 'Speed 10MB';
+  return 'Speed 7MB';
+}
+
+async function applyProfile(id, name, profile) {
+  try {
+    showToast(`Memproses ${name}...`, 'info');
+    const res = await apiPatch(`/rest/ppp/secret/${id}`, { profile });
+    if (res.ok) {
+      const isIsolir = profile === ISOLIR_PROFILE;
+      showToast(`${name} berhasil ${isIsolir ? 'diisolir' : 'diaktifkan'}!`, isIsolir ? 'warning' : 'success');
+      await loadClients();
+    } else {
+      const err = await res.json();
+      showToast(`Gagal: ${err?.message || 'Unknown error'}`, 'error');
+    }
+  } catch (e) {
+    showToast('Gagal terhubung ke proxy server.', 'error');
+  }
+}
+
+// ──── DETAIL MODAL ────
+function showDetail(id) {
+  const client = allClients.find(c => c['.id'] === id);
+  if (!client) return;
+
+  const activeInfo = getActiveInfo(client.name);
+  const status = getClientStatus(client);
+
+  document.getElementById('modal-client-name').textContent = client.name;
+
+  const fields = [
+    ['Username', client.name],
+    ['Profile / Paket', client.profile || '—'],
+    ['Remote IP (config)', client['remote-address'] || '—'],
+    ['Local IP (config)', client['local-address'] || '—'],
+    ['Status', status === 'online' ? '🟢 Online' : status === 'isolated' ? '🔴 Diisolir' : '⚫ Offline'],
+    ['IP Aktif', activeInfo ? activeInfo.address : '—'],
+    ['Uptime', activeInfo ? activeInfo.uptime : '—'],
+    ['Caller ID', activeInfo ? (activeInfo['caller-id'] || '—') : '—'],
+  ];
+
+  document.getElementById('modal-detail-grid').innerHTML = fields.map(([label, val]) => `
+    <div class="detail-item">
+      <label>${label}</label>
+      <span>${val}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('modal-detail').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  pendingAction = null;
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) closeModal(el.id);
+  });
+});
+
+// ──── TOAST ────
+let toastTimer;
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    doLogin();
+  }
+});
+</script>
+</body>
+</html>
