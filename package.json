@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "MikroTik PPPoE Client Manager Dashboard",
   "main": "proxy-server.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "start": "node proxy-server.js",
     "dev": "node proxy-server.js"
