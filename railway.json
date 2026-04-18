@@ -1,4 +1,3 @@
-// railway.json - Deployment config untuk Railway.app
 {
   "$schema": "https://cdn.railway.app/railway.schema.json",
   "build": {
